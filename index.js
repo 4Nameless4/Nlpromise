@@ -134,4 +134,105 @@ Nlpromise.prototype.then = function (onFulfilled, onRejected) {
   });
 };
 
+Nlpromise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+Nlpromise.resolve = function (value) {
+  return new Nlpromise((res) => res(value));
+};
+
+Nlpromise.reject = function (reason) {
+  return new Nlpromise((res, rej) => rej(reason));
+};
+
+Nlpromise.all = function (arr) {
+  return new Promise((res, rej) => {
+    const length = arr.length;
+    let count = 0;
+    const results = arr.map(() => undefined);
+    let done = false;
+
+    function resolve(v, i) {
+      if (done) return;
+      results[i] = v;
+      count++;
+      if (count === length) {
+        done = true;
+        res(results);
+      }
+    }
+    function reject(v) {
+      if (done) return;
+      done = true;
+      rej(v);
+    }
+
+    for (let i = 0; i < length; i++) {
+      new Promise((res) => res(arr[i])).then((d) => {
+        resolve(d, i);
+      }, reject);
+    }
+  });
+};
+Nlpromise.race = function (arr) {
+  return new Promise((res, rej) => {
+    const length = arr.length;
+    let done = false;
+
+    function resolve(v) {
+      if (done) return;
+      done = true;
+      res(v);
+    }
+    function reject(v) {
+      if (done) return;
+      done = true;
+      rej(v);
+    }
+
+    for (let i = 0; i < length; i++) {
+      new Promise((res) => res(arr[i])).then(resolve, reject);
+    }
+  });
+};
+Nlpromise.allSettld = function (arr) {
+  return new Promise((res, rej) => {
+    const length = arr.length;
+    let count = 0;
+    const results = arr.map(() => undefined);
+    let done = false;
+
+    function resolve(v, i) {
+      if (done) return;
+      results[i] = v;
+      count++;
+      if (count === length) {
+        done = true;
+        res(results);
+      }
+    }
+    function reject(v, i) {
+      if (done) return;
+      results[i] = v;
+      count++;
+      if (count === length) {
+        done = true;
+        rej(results);
+      }
+    }
+
+    for (let i = 0; i < length; i++) {
+      new Promise((res) => res(arr[i])).then(
+        (d) => {
+          resolve(d, i);
+        },
+        (d) => {
+          reject(d, i);
+        }
+      );
+    }
+  });
+};
+
 module.exports = Nlpromise;
